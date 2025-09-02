@@ -1,6 +1,9 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from typing import List
@@ -19,7 +22,7 @@ from functions import (
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="vidhilikhit matrimonial", version="1.0.0")
+app = FastAPI(title="FastAPI Auth System", version="1.0.0")
 
 # CORS middleware
 app.add_middleware(
@@ -30,9 +33,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
+# Templates
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    return {"message": "Welcome to vidhilikhit matrimonial"}
+    """Serve the main HTML page."""
+    with open("templates/index.html", "r") as f:
+        html_content = f.read()
+    return HTMLResponse(content=html_content)
+
+@app.get("/api")
+async def api_root():
+    """API root endpoint."""
+    return {"message": "Welcome to FastAPI Auth System"}
 
 @app.post("/register", response_model=UserSchema)
 async def register(user: UserCreate, db: Session = Depends(get_db)):
