@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAPI Auth System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .form-container {
+            display: none;
+        }
+        
+        .form-container.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin: 10px;
+            min-width: 120px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .toggle-buttons {
+            margin-bottom: 30px;
+        }
+        
+        .toggle-btn {
+            background: #f8f9fa;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .toggle-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .welcome-message {
+            display: none;
+            background: #d4edda;
+            color: #155724;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+            display: none;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+            display: none;
+        }
+        
+        .logout-btn {
+            background: #dc3545;
+            margin-top: 20px;
+        }
+        
+        .user-info {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .user-info h3 {
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        
+        .user-info p {
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Auth System</h1>
+        
+        <!-- Welcome Message (shown when logged in) -->
+        <div id="welcomeMessage" class="welcome-message">
+            <h2>🎉 Welcome! You are logged in!</h2>
+            <div id="userInfo" class="user-info">
+                <h3>User Information:</h3>
+                <p><strong>Username:</strong> <span id="username"></span></p>
+                <p><strong>Email:</strong> <span id="email"></span></p>
+                <p><strong>Status:</strong> <span id="status"></span></p>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message"></div>
+        
+        <!-- Success Message -->
+        <div id="successMessage" class="success-message"></div>
+        
+        <!-- Toggle Buttons -->
+        <div class="toggle-buttons">
+            <button class="toggle-btn active" onclick="showForm('login')">Login</button>
+            <button class="toggle-btn" onclick="showForm('register')">Register</button>
+        </div>
+        
+        <!-- Login Form -->
+        <div id="loginForm" class="form-container active">
+            <h2>Login</h2>
+            <form onsubmit="login(event)">
+                <div class="form-group">
+                    <label for="loginUsername">Username:</label>
+                    <input type="text" id="loginUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password:</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+        
+        <!-- Register Form -->
+        <div id="registerForm" class="form-container">
+            <h2>Register</h2>
+            <form onsubmit="register(event)">
+                <div class="form-group">
+                    <label for="registerEmail">Email:</label>
+                    <input type="email" id="registerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerUsername">Username:</label>
+                    <input type="text" id="registerUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Password:</label>
+                    <input type="password" id="registerPassword" required>
+                </div>
+                <button type="submit">Register</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentToken = null;
+        let currentUser = null;
+
+        // Check if user is already logged in
+        window.onload = function() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                currentToken = token;
+                fetchUserInfo();
+            }
+        };
+
+        function showForm(formType) {
+            // Hide all forms
+            document.getElementById('loginForm').classList.remove('active');
+            document.getElementById('registerForm').classList.remove('active');
+            
+            // Remove active class from all toggle buttons
+            document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected form and activate button
+            if (formType === 'login') {
+                document.getElementById('loginForm').classList.add('active');
+                event.target.classList.add('active');
+            } else {
+                document.getElementById('registerForm').classList.add('active');
+                event.target.classList.add('active');
+            }
+        }
+
+        async function register(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('registerEmail').value;
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage('success', 'Registration successful! You can now login.');
+                    // Clear form
+                    document.getElementById('registerEmail').value = '';
+                    document.getElementById('registerUsername').value = '';
+                    document.getElementById('registerPassword').value = '';
+                    // Switch to login form
+                    showForm('login');
+                } else {
+                    showMessage('error', data.detail || 'Registration failed');
+                }
+            } catch (error) {
+                showMessage('error', 'Network error. Please try again.');
+            }
+        }
+
+        async function login(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+                
+                const response = await fetch('/token', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentToken = data.access_token;
+                    localStorage.setItem('authToken', currentToken);
+                    showMessage('success', 'Login successful!');
+                    await fetchUserInfo();
+                } else {
+                    showMessage('error', data.detail || 'Login failed');
+                }
+            } catch (error) {
+                showMessage('error', 'Network error. Please try again.');
+            }
+        }
+
+        async function fetchUserInfo() {
+            try {
+                const response = await fetch('/users/me', {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const userData = await response.json();
+                    currentUser = userData;
+                    showWelcomeMessage(userData);
+                } else {
+                    // Token might be expired
+                    localStorage.removeItem('authToken');
+                    currentToken = null;
+                    hideWelcomeMessage();
+                }
+            } catch (error) {
+                console.error('Error fetching user info:', error);
+            }
+        }
+
+        function showWelcomeMessage(userData) {
+            document.getElementById('welcomeMessage').style.display = 'block';
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'none';
+            document.querySelector('.toggle-buttons').style.display = 'none';
+            
+            document.getElementById('username').textContent = userData.username;
+            document.getElementById('email').textContent = userData.email;
+            document.getElementById('status').textContent = userData.is_active ? 'Active' : 'Inactive';
+        }
+
+        function hideWelcomeMessage() {
+            document.getElementById('welcomeMessage').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+            document.querySelector('.toggle-buttons').style.display = 'block';
+            showForm('login');
+        }
+
+        function logout() {
+            localStorage.removeItem('authToken');
+            currentToken = null;
+            currentUser = null;
+            hideWelcomeMessage();
+            showMessage('success', 'Logged out successfully!');
+        }
+
+        function showMessage(type, message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            
+            if (type === 'error') {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+            } else {
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+                errorDiv.style.display = 'none';
+            }
+            
+            // Auto-hide messages after 5 seconds
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
